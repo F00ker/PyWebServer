@@ -1,14 +1,37 @@
 import socket
 import os
+import ConfigParser
 
 class http_listener:
 
     def __init__(self):
         self.request_buffer = ""
         self.serversocket = None
-        self.serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.serversocket.bind(("localhost",8080))
         self.connection = None
+        self.ListenIP = None
+        self.ListenPort = None
+
+        Config = ConfigParser.ConfigParser()
+        try:
+            Config.read("config.in")
+            if Config.get("Socket","ListenIP") != None:
+                self.ListenIP = Config.get("Socket","ListenIP")
+            else:
+                self.ListenIP = "127.0.0.1"
+            if Config.get("Socket","ListenPort") != None:
+                self.ListenPort = Config.get("Socket","ListenPort")
+            else:
+                self.ListenPort = 8080
+        except ConfigParser.NoSectionError as e:
+            print "Config file not found, reverting to defaults"
+            self.ListenIP = "127.0.0.1"
+            self.ListenPort = 8080
+        except Exception as e:
+            print "something fucked up"
+            raise
+
+        self.serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.serversocket.bind((self.ListenIP,int(self.ListenPort)))
 
     def get_request_path(self,request_buffer):
         self.request_buffer = request_buffer
