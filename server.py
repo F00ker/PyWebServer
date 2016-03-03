@@ -15,28 +15,15 @@ class http_listener:
         if "GET" in self.request_buffer:
             GET_request = self.request_buffer.split("\n", 1)
             request_PATH = GET_request[0].split(" ", 2)
-            print request_PATH
-            return request_PATH
+            return request_PATH[1]
 
         if "HEAD" in self.request_buffer:
             return [0,"/curious"]
 
-        print "end get_request_path"
-
-    def get_request_type(self,request):
-        self.request_type = request.split()[0]
-        if self.request_type == "GET":
-            self.get_content(request)
-        elif self.request_type == "HEAD":
-            pass
-        elif self.request_type == "POST":
-            return "Read only server"
-
     def get_content(self,request):
         try:
             self.response_buffer = ""
-            #print os.getcwd()+get_request_path(request)
-            with open(os.getcwd()+request_PATH[1], 'r') as requested_file:
+            with open(os.getcwd()+request, 'r') as requested_file:
                 for line in requested_file:
                     print line
                     self.response_buffer += line
@@ -54,8 +41,7 @@ class http_listener:
             request_buffer = self.connection.recv(4096)
             if len(request_buffer) > 0:
                 try:
-                    #print request_buffer
-                    self.connection.sendall(get_content(self.get_request_path(request_buffer)))
+                    self.connection.sendall(self.get_content(self.get_request_path(request_buffer)))
                     self.connection.close()
                 except Exception as e:
                     self.connection.sendall('HTTP/1.0 500 Internal Server Error\r\n')
