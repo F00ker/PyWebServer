@@ -13,7 +13,7 @@ class http_listener:
 
         Config = ConfigParser.ConfigParser()
         try:
-            Config.read("config.in")
+            Config.read("config.ini")
             if Config.get("Socket","ListenIP") != None:
                 self.ListenIP = Config.get("Socket","ListenIP")
             else:
@@ -22,6 +22,10 @@ class http_listener:
                 self.ListenPort = Config.get("Socket","ListenPort")
             else:
                 self.ListenPort = 8080
+            if Config.get("Socket","DocumentRoot") != None:
+                self.DocumentRoot = Config.get("Socket","DocumentRoot")
+            else:
+                self.DocumentRoot = os.getcwd()
         except ConfigParser.NoSectionError as e:
             print "Config file not found, reverting to defaults"
             self.ListenIP = "127.0.0.1"
@@ -31,6 +35,7 @@ class http_listener:
             raise
 
         self.serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.serversocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.serversocket.bind((self.ListenIP,int(self.ListenPort)))
 
     def get_request_path(self,request_buffer):
@@ -44,6 +49,9 @@ class http_listener:
             return [0,"/curious"]
 
     def get_content(self,request):
+        if request == "/":
+            print "index"
+            request = "/index.html"
         try:
             self.response_buffer = ""
             with open(os.getcwd()+request, 'r') as requested_file:
